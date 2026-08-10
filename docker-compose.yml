@@ -13,6 +13,7 @@ services:
     volumes:
       - grafana-data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
     networks: [monitoring, proxy]
     depends_on: [prometheus, loki]
     healthcheck:
