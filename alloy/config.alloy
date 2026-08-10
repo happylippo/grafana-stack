@@ -2,8 +2,8 @@ discovery.docker "containers" {
   host = "tcp://docker-socket-proxy:2375"
 }
 
-discovery.relabel "containers" {
-  targets = discovery.docker.containers.targets
+discovery.relabel "docker_logs" {
+  targets = []
 
   rule {
     source_labels = ["__meta_docker_container_name"]
@@ -13,10 +13,11 @@ discovery.relabel "containers" {
 }
 
 loki.source.docker "containers" {
-  host       = "tcp://docker-socket-proxy:2375"
-  targets    = discovery.relabel.containers.output
-  labels     = { job = "docker" }
-  forward_to = [loki.write.local.receiver]
+  host          = "tcp://docker-socket-proxy:2375"
+  targets       = discovery.docker.containers.targets
+  labels        = { job = "docker" }
+  relabel_rules = discovery.relabel.docker_logs.rules
+  forward_to    = [loki.write.local.receiver]
 }
 
 loki.write "local" {
