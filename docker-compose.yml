@@ -13,12 +13,8 @@ services:
     volumes:
       - grafana-data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
-    networks:
-      - monitoring
-      - proxy
-    depends_on:
-      - prometheus
-      - loki
+    networks: [monitoring, proxy]
+    depends_on: [prometheus, loki]
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/health >/dev/null 2>&1 || exit 1"]
       interval: 30s
@@ -47,8 +43,7 @@ services:
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
-    networks:
-      - monitoring
+    networks: [monitoring]
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:9090/-/healthy >/dev/null 2>&1 || exit 1"]
       interval: 30s
@@ -64,14 +59,28 @@ services:
     volumes:
       - ./loki/config.yml:/etc/loki/config.yml:ro
       - loki-data:/loki
-    networks:
-      - monitoring
+    networks: [monitoring]
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3100/ready >/dev/null 2>&1 || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 5
       start_period: 20s
+
+  docker-socket-proxy:
+    image: ${SOCKET_PROXY_IMAGE:-lscr.io/linuxserver/socket-proxy:latest}
+    container_name: grafana-docker-socket-proxy
+    restart: unless-stopped
+    environment:
+      CONTAINERS: "1"
+      INFO: "1"
+      POST: "0"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks: [monitoring]
+    read_only: true
+    tmpfs:
+      - /run
 
   alloy:
     image: ${ALLOY_IMAGE:-grafana/alloy:latest}
@@ -84,24 +93,20 @@ services:
     volumes:
       - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
       - alloy-data:/var/lib/alloy/data
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    networks:
-      - monitoring
+    networks: [monitoring]
     depends_on:
       - loki
+      - docker-socket-proxy
 
   node-exporter:
     image: ${NODE_EXPORTER_IMAGE:-prom/node-exporter:latest}
     container_name: node-exporter
     restart: unless-stopped
-    command:
-      - --path.rootfs=/host
+    command: ["--path.rootfs=/host"]
     pid: host
     volumes:
       - /:/host:ro,rslave
-    networks:
-      - monitoring
+    networks: [monitoring]
 
   cadvisor:
     image: ${CADVISOR_IMAGE:-gcr.io/cadvisor/cadvisor:latest}
@@ -116,19 +121,16 @@ services:
       - /sys:/sys:ro
       - /var/lib/docker:/var/lib/docker:ro
       - /dev/disk:/dev/disk:ro
-    networks:
-      - monitoring
+    networks: [monitoring]
 
   blackbox-exporter:
     image: ${BLACKBOX_EXPORTER_IMAGE:-prom/blackbox-exporter:latest}
     container_name: blackbox-exporter
     restart: unless-stopped
-    command:
-      - --config.file=/etc/blackbox_exporter/config.yml
+    command: ["--config.file=/etc/blackbox_exporter/config.yml"]
     volumes:
       - ./blackbox/config.yml:/etc/blackbox_exporter/config.yml:ro
-    networks:
-      - monitoring
+    networks: [monitoring]
 
 networks:
   monitoring:
