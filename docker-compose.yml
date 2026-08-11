@@ -21,7 +21,7 @@ services:
       GF_AUTH_GENERIC_OAUTH_TOKEN_URL: ${AUTHENTIK_URL:-https://auth.example.com}/application/o/token/
       GF_AUTH_GENERIC_OAUTH_API_URL: ${AUTHENTIK_URL:-https://auth.example.com}/application/o/userinfo/
       GF_AUTH_GENERIC_OAUTH_ALLOW_SIGN_UP: ${AUTHENTIK_ALLOW_SIGN_UP:-true}
-      GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH: "contains(groups, 'Grafana Admins') && 'Admin' || contains(groups, 'Grafana Editors') && 'Editor' || 'Viewer'"
+      GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH: "contains(groups[*], 'Grafana Admins') && 'Admin' || contains(groups[*], 'Grafana Editors') && 'Editor' || 'Viewer'"
       GF_AUTH_GENERIC_OAUTH_SKIP_ORG_ROLE_SYNC: "false"
       GF_AUTH_OAUTH_AUTO_LOGIN: ${AUTHENTIK_AUTO_LOGIN:-false}
       GF_AUTH_SIGNOUT_REDIRECT_URL: ${AUTHENTIK_URL:-https://auth.example.com}/application/o/${AUTHENTIK_APP_SLUG:-grafana}/end-session/
