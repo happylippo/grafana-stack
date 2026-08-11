@@ -10,6 +10,21 @@ services:
       GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL:-https://grafana.example.com}
       GF_AUTH_ANONYMOUS_ENABLED: "false"
       GF_LOG_LEVEL: ${GRAFANA_LOG_LEVEL:-info}
+
+      # Optional Authentik SSO via Generic OAuth / OIDC
+      GF_AUTH_GENERIC_OAUTH_ENABLED: ${AUTHENTIK_ENABLED:-false}
+      GF_AUTH_GENERIC_OAUTH_NAME: ${AUTHENTIK_OAUTH_NAME:-Authentik}
+      GF_AUTH_GENERIC_OAUTH_CLIENT_ID: ${AUTHENTIK_CLIENT_ID:-}
+      GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET: ${AUTHENTIK_CLIENT_SECRET:-}
+      GF_AUTH_GENERIC_OAUTH_SCOPES: "openid profile email"
+      GF_AUTH_GENERIC_OAUTH_AUTH_URL: ${AUTHENTIK_URL:-https://auth.example.com}/application/o/authorize/
+      GF_AUTH_GENERIC_OAUTH_TOKEN_URL: ${AUTHENTIK_URL:-https://auth.example.com}/application/o/token/
+      GF_AUTH_GENERIC_OAUTH_API_URL: ${AUTHENTIK_URL:-https://auth.example.com}/application/o/userinfo/
+      GF_AUTH_GENERIC_OAUTH_ALLOW_SIGN_UP: ${AUTHENTIK_ALLOW_SIGN_UP:-true}
+      GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH: "contains(groups, 'Grafana Admins') && 'Admin' || contains(groups, 'Grafana Editors') && 'Editor' || 'Viewer'"
+      GF_AUTH_GENERIC_OAUTH_SKIP_ORG_ROLE_SYNC: "false"
+      GF_AUTH_OAUTH_AUTO_LOGIN: ${AUTHENTIK_AUTO_LOGIN:-false}
+      GF_AUTH_SIGNOUT_REDIRECT_URL: ${AUTHENTIK_URL:-https://auth.example.com}/application/o/${AUTHENTIK_APP_SLUG:-grafana}/end-session/
     volumes:
       - grafana-data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
@@ -27,7 +42,7 @@ services:
       traefik.docker.network: ${TRAEFIK_DOCKER_NETWORK:-proxy}
       traefik.http.routers.grafana.entrypoints: ${TRAEFIK_ENTRYPOINTS:-websecure}
       traefik.http.routers.grafana.rule: ${TRAEFIK_HOST_RULE:-Host(`grafana.example.com`)}
-      traefik.http.routers.grafana.middlewares: ${TRAEFIK_MIDDLEWARES:-default@file,authentik@file}
+      traefik.http.routers.grafana.middlewares: ${TRAEFIK_MIDDLEWARES:-default@file}
       traefik.http.routers.grafana.tls: "${TRAEFIK_TLS:-true}"
       traefik.http.routers.grafana.tls.certresolver: ${TRAEFIK_CERTRESOLVER:-cloudflare_resolver}
       traefik.http.services.grafana.loadbalancer.server.port: "3000"
