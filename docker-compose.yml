@@ -130,6 +130,10 @@ services:
     container_name: cadvisor
     restart: unless-stopped
     privileged: true
+    command:
+      - --housekeeping_interval=30s
+      - --docker_only=true
+      - --disable_metrics=advtcp,cpu_topology,cpuset,hugetlb,memory_numa,process,referenced_memory,resctrl,sched,tcp,udp
     devices:
       - /dev/kmsg:/dev/kmsg
     volumes:
